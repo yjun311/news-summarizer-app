@@ -1,10 +1,15 @@
 from transformers import pipeline
-import textwrap
 
-# 요약기 초기화
+# 요약기 (영어 기준으로 작동)
 summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 
-# 텍스트를 조각으로 나누는 함수
+# 번역기 (영어 → 한국어)
+translator = pipeline("translation_en_to_ko", model="Helsinki-NLP/opus-mt-en-ko")
+
+def translate_en_to_ko(text):
+    result = translator(text, max_length=512)
+    return result[0]['translation_text']
+
 def split_text(text, max_chunk_length=1000):
     paragraphs = text.split("\n")
     chunks = []
@@ -21,16 +26,16 @@ def split_text(text, max_chunk_length=1000):
 
     return chunks
 
-# 요약 함수 (긴 문서도 처리 가능)
 def summarize_text(text):
     chunks = split_text(text)
-
     summarized_chunks = []
+
     for chunk in chunks:
-        summary = summarizer(chunk, max_length=130, min_length=30, do_sample=False)
+        summary = summarizer(
+            chunk,
+            max_length=45, min_length=15, do_sample=False
+        )
         summarized_chunks.append(summary[0]["summary_text"])
 
-    # 조각들을 다시 하나의 요약으로 결합
-    final_summary = " ".join(summarized_chunks)
+    final_summary = " ".join(summarized_chunks[:2])
     return final_summary
-
